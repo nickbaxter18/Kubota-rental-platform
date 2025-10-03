@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "generatedAt": "2025-10-03T11:41:10.453Z",
+    "period": {
+      "start": "2025-09-29",
+      "end": "2025-10-05"
+    },
+    "version": "1.0.0"
+  },
+  "metrics": {
+    "totalTests": 350,
+    "flakyRate": 0.5,
+    "avgDuration": 2.3,
+    "coverageTrend": {
+      "current": 85.5,
+      "previous": 84.2,
+      "trend": "up"
+    },
+    "criticalPathHealth": {
+      "equipmentSearch": {
+        "duration": 150,
+        "status": "healthy"
+      },
+      "bookingCreation": {
+        "duration": 1800,
+        "status": "healthy"
+      },
+      "paymentProcessing": {
+        "duration": 2500,
+        "status": "warning"
+      },
+      "emailDelivery": {
+        "duration": 3200,
+        "status": "healthy"
+      }
+    }
+  },
+  "alerts": [
+    {
+      "type": "critical",
+      "message": "1 critical path tests exceeding 3s threshold",
+      "severity": "high"
+    }
+  ],
+  "recommendations": [
+    {
+      "category": "performance",
+      "priority": "high",
+      "action": "Optimize payment processing tests - currently 2.5s",
+      "impact": "Improve CI pipeline speed"
+    },
+    {
+      "category": "reliability",
+      "priority": "medium",
+      "action": "Investigate flaky tests in booking flow",
+      "impact": "Reduce false negatives in CI"
+    }
+  ],
+  "historicalComparison": {
+    "flakyRateChange": -0.2,
+    "durationChange": 0.1,
+    "coverageChange": 1.3
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2025-10-03T12:29:41.534Z",
+  "flakyTests": [],
+  "quarantinedTests": [],
+  "analysisHistory": [
+    {
+      "timestamp": "2025-10-03T12:29:41.534Z",
+      "flakyCount": 0,
+      "flakyRate": 0
+    }
+  ]
+}

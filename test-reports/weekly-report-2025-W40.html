@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weekly Test Health Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .metric { background: #f5f5f5; padding: 20px; margin: 10px 0; border-radius: 5px; }
+        .critical { border-left: 5px solid #dc3545; }
+        .warning { border-left: 5px solid #ffc107; }
+        .success { border-left: 5px solid #28a745; }
+        .chart { width: 100%; height: 200px; background: #eee; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Weekly Test Health Report</h1>
+    <p><strong>Period:</strong> 2025-09-29 to 2025-10-05</p>
+
+    <div class="metric success">
+        <h3>Test Coverage: 85.5%</h3>
+        <p>Trend: ↗️ 84.2% previous week</p>
+    </div>
+
+    <div class="metric success">
+        <h3>Flaky Test Rate: 0.5%</h3>
+        <p>Target: < 1%</p>
+    </div>
+
+    <div class="metric">
+        <h3>Average Test Duration: 2.3s</h3>
+        <p>Total tests: 350</p>
+    </div>
+
+    <h2>Critical Path Health</h2>
+    
+        <div class="metric success">
+            <strong>equipmentSearch:</strong> 150ms (healthy)
+        </div>
+    
+        <div class="metric success">
+            <strong>bookingCreation:</strong> 1800ms (healthy)
+        </div>
+    
+        <div class="metric warning">
+            <strong>paymentProcessing:</strong> 2500ms (warning)
+        </div>
+    
+        <div class="metric success">
+            <strong>emailDelivery:</strong> 3200ms (healthy)
+        </div>
+    
+
+    <h2>Alerts</h2>
+    
+        <div class="metric critical">
+            <strong>CRITICAL:</strong> 1 critical path tests exceeding 3s threshold
+        </div>
+    
+
+    <h2>Recommendations</h2>
+    
+        <div class="metric">
+            <strong>PERFORMANCE (high):</strong> Optimize payment processing tests - currently 2.5s<br>
+            <em>Impact: Improve CI pipeline speed</em>
+        </div>
+    
+        <div class="metric">
+            <strong>RELIABILITY (medium):</strong> Investigate flaky tests in booking flow<br>
+            <em>Impact: Reduce false negatives in CI</em>
+        </div>
+    
+</body>
+</html>

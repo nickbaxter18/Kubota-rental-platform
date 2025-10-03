@@ -1,0 +1,124 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    build:
+      context: .
+      dockerfile: ./docker/postgres/Dockerfile
+    container_name: kubota-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kubota_rental
+      POSTGRES_USER: kubota_user
+      POSTGRES_PASSWORD: kubota_password
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kubota_user -d kubota_rental"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: kubota-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB (for flexible document storage)
+  mongodb:
+    image: mongo:7-jammy
+    container_name: kubota-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: kubota_admin
+      MONGO_INITDB_ROOT_PASSWORD: kubota_password
+      MONGO_INITDB_DATABASE: kubota_rental
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: ./docker/backend/Dockerfile
+    container_name: kubota-backend
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://kubota_user:kubota_password@postgres:5432/kubota_rental
+      - REDIS_URL=redis://redis:6379
+      - MONGODB_URL=mongodb://kubota_admin:kubota_password@mongodb:27017/kubota_rental
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+      - STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: pnpm start:dev
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: ./docker/frontend/Dockerfile
+    container_name: kubota-frontend
+    restart: unless-stopped
+    ports:
+      - "3003:3000"
+    sysctls:
+      fs.inotify.max_user_watches: 524288
+      fs.inotify.max_user_instances: 512
+      fs.inotify.max_queued_events: 65536
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3002
+      NEXT_PUBLIC_APP_URL: http://localhost:3003
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: pnpm dev
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  mongodb_data:
+    driver: local
+
+networks:
+  default:
+    name: kubota-network

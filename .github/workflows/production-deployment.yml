@@ -1,0 +1,252 @@
+name: Production Deployment with Blue-Green Strategy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target Environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+      version:
+        description: 'Version to deploy'
+        required: false
+
+env:
+  NODE_ENV: production
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # =====================================
+  # QUALITY GATE
+  # =====================================
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    outputs:
+      quality-passed: ${{ steps.quality.outputs.passed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test:ci
+        env:
+          CI: true
+
+      - name: Run security scan
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Run Lighthouse CI
+        run: |
+          cd frontend && npx lhci autorun \
+            --config=lighthouserc.js \
+            --upload.target=temporary-public-storage
+
+      - name: Quality check
+        id: quality
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+  # =====================================
+  # BUILD & TEST
+  # =====================================
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    needs: quality-gate
+    if: needs.quality-gate.outputs.quality-passed == 'true'
+    strategy:
+      matrix:
+        service: [backend, frontend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build ${{ matrix.service }}
+        run: |
+          if [ "${{ matrix.service }}" == "backend" ]; then
+            cd backend && npm run build
+          else
+            cd frontend && npm run build
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.service }}-build
+          path: |
+            ${{ matrix.service }}/dist/
+            ${{ matrix.service }}/build/
+          retention-days: 30
+
+  # =====================================
+  # DOCKER BUILD & PUSH
+  # =====================================
+  docker-build:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    outputs:
+      backend-image: ${{ steps.meta.outputs.tags }}
+      frontend-image: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}-backend
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}-frontend
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # =====================================
+  # BLUE-GREEN DEPLOYMENT
+  # =====================================
+  deploy:
+    name: Blue-Green Deployment
+    runs-on: ubuntu-latest
+    needs: docker-build
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout Infrastructure Code
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}-infrastructure
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: infrastructure
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Deploy to Blue-Green
+        run: |
+          # Update deployment with new image
+          kubectl set image deployment/backend-${{ github.event.inputs.environment }} \
+            backend=${{ needs.docker-build.outputs.backend-image }}
+
+          kubectl set image deployment/frontend-${{ github.event.inputs.environment }} \
+            frontend=${{ needs.docker-build.outputs.frontend-image }}
+
+          # Wait for rollout to complete
+          kubectl rollout status deployment/backend-${{ github.event.inputs.environment }}
+          kubectl rollout status deployment/frontend-${{ github.event.inputs.environment }}
+
+      - name: Health Check
+        run: |
+          # Wait for services to be ready
+          kubectl wait --for=condition=available --timeout=300s \
+            deployment/backend-${{ github.event.inputs.environment }}
+
+          kubectl wait --for=condition=available --timeout=300s \
+            deployment/frontend-${{ github.event.inputs.environment }}
+
+          # Verify health endpoints
+          curl -f https://api-${{ github.event.inputs.environment }}.udigit-rentals.com/health
+          curl -f https://${{ github.event.inputs.environment }}.udigit-rentals.com/health
+
+      - name: Switch Traffic
+        if: success()
+        run: |
+          # Update ingress to point to new version
+          kubectl patch ingress ${{ github.event.inputs.environment }}-ingress \
+            -p '{"spec":{"rules":[{"host":"${{ github.event.inputs.environment }}.udigit-rentals.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"frontend-${{ github.event.inputs.environment }}","port":{"number":80}}}}]}}]}}'
+
+  # =====================================
+  # ROLLBACK
+  # =====================================
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: failure()
+    needs: deploy
+
+    steps:
+      - name: Rollback to previous version
+        run: |
+          kubectl rollout undo deployment/backend-${{ github.event.inputs.environment }}
+          kubectl rollout undo deployment/frontend-${{ github.event.inputs.environment }}
+
+      - name: Notify team
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Production Deployment Failed - Auto Rollback',
+              body: 'Deployment failed and was automatically rolled back. Check logs for details.',
+              labels: ['deployment', 'rollback']
+            });

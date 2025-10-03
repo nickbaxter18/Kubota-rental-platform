@@ -1,0 +1,16 @@
+tunnel: udigit-rentals
+
+ingress:
+  - hostname: editor.udigitai.io
+    service: http://localhost:3000
+  - hostname: api.udigitai.io
+    service: http://localhost:3001
+  - service: http_status:404
+
+# Direct tunnel URLs for immediate testing (no DNS wait required)
+# Editor: https://6062ab45-60b6-4033-93c7-be0077d24596.cfargotunnel.com
+# API: https://6062ab45-60b6-4033-93c7-be0077d24596.cfargotunnel.com
+
+# Use token-based authentication instead of certificate
+originRequest:
+  noTLSVerify: true

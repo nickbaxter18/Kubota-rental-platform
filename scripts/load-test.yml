@@ -1,0 +1,69 @@
+config:
+  target: 'https://api.udigit-rentals.com'
+  phases:
+    - duration: 120
+      arrivalRate: 5
+      name: Warm up
+    - duration: 300
+      arrivalRate: 20
+      name: Normal load
+    - duration: 60
+      arrivalRate: 50
+      name: Stress test
+    - duration: 120
+      arrivalRate: 5
+      name: Recovery
+
+scenarios:
+  - name: "Booking flow"
+    weight: 70
+    flow:
+      - get:
+          url: "/api/equipment"
+      - post:
+          url: "/api/bookings"
+          json:
+            equipmentId: "{{ $randomInt(1, 100) }}"
+            startDate: "{{ $timestamp }}"
+            endDate: "{{ $timestamp }}"
+      - get:
+          url: "/api/bookings/{{ $randomInt(1, 1000) }}"
+
+  - name: "Equipment search"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/equipment?category={{ $randomInt(1, 5) }}&location={{ $randomInt(1, 10) }}"
+
+  - name: "User authentication"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test{{ $randomInt(1, 1000) }}@example.com"
+            password: "password123"
+      - get:
+          url: "/api/auth/profile"
+
+  - name: "Contract operations"
+    weight: 15
+    flow:
+      - get:
+          url: "/api/contracts"
+      - post:
+          url: "/api/contracts"
+          json:
+            bookingId: "{{ $randomInt(1, 1000) }}"
+            insuranceRequired: true
+
+  - name: "Payment processing"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/payments/create-intent"
+          json:
+            amount: "{{ $randomInt(100, 5000) }}"
+            currency: "USD"
+      - get:
+          url: "/api/payments/history"

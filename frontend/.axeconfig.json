@@ -1,0 +1,97 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dequelabs/axe-core/main/doc/rule-schema.json",
+  "rules": {
+    "color-contrast": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "keyboard-access": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "focus-management": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "aria-required": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "aria-valid": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "image-alt": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "heading-order": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "landmark": {
+      "enabled": true,
+      "severity": "warning"
+    },
+    "region": {
+      "enabled": true,
+      "severity": "warning"
+    },
+    "form-field": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "button-name": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "link-name": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "language": {
+      "enabled": true,
+      "severity": "warning"
+    },
+    "page-title": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "bypass": {
+      "enabled": true,
+      "severity": "warning"
+    }
+  },
+  "tags": [
+    "wcag2a",
+    "wcag2aa",
+    "wcag21aa",
+    "section508",
+    "best-practice"
+  ],
+  "standards": [
+    "WCAG 2.1 AA",
+    "Section 508"
+  ],
+  "reporters": [
+    "json",
+    "html"
+  ],
+  "outputDir": "./accessibility-reports",
+  "outputFileName": "axe-report-{{datetime}}.json",
+  "timeout": 60000,
+  "iframes": true,
+  "iframeTimeout": 30000,
+  "restoreScroll": true,
+  "include": [
+    "**/*"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/coverage/**",
+    "**/.next/**",
+    "**/dist/**",
+    "**/*.config.js",
+    "**/*.config.ts"
+  ]
+}
