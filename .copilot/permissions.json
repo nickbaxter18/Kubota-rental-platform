@@ -1,0 +1,93 @@
+{
+  "accessLevel": "full",
+  "allowedActions": [
+    "file.read",
+    "file.write",
+    "file.create",
+    "file.delete",
+    "terminal.execute",
+    "git.operations",
+    "ai.generate",
+    "ai.refactor",
+    "ai.analyze",
+    "ai.test",
+    "ai.deploy",
+    "workspace.search",
+    "workspace.navigate",
+    "debug.start",
+    "debug.evaluate"
+  ],
+  "userOverrideRequired": [
+    "production.deploy",
+    "db.migrate",
+    "secrets.rotate",
+    "branch.delete",
+    "npm.publish",
+    "docker.push",
+    "kubectl.apply.production"
+  ],
+  "safeCommands": [
+    "pnpm install",
+    "pnpm build",
+    "pnpm test",
+    "pnpm lint",
+    "pnpm type-check",
+    "git status",
+    "git log --oneline -10",
+    "git diff",
+    "git add .",
+    "git commit -m",
+    "git push",
+    "docker-compose ps",
+    "docker-compose logs",
+    "kubectl get pods",
+    "kubectl get services",
+    "kubectl get deployments",
+    "npm run dev",
+    "npm run build",
+    "jest",
+    "vitest",
+    "playwright test"
+  ],
+  "contextSources": [
+    "ai-context.json",
+    "package.json",
+    "tsconfig.json",
+    "README.md",
+    "decisions.md",
+    ".github/workflows/*.yml",
+    "infra/**/*.tf",
+    "docker-compose*.yml"
+  ],
+  "analysisScope": {
+    "includePatterns": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.json",
+      "**/*.md",
+      "**/*.yml",
+      "**/*.yaml",
+      "**/*.tf"
+    ],
+    "excludePatterns": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/.git/**",
+      "**/coverage/**",
+      "**/test-results/**"
+    ]
+  },
+  "communication": {
+    "logDecisions": true,
+    "logCommands": true,
+    "logFile": ".ai-command.log",
+    "requireApprovalFor": {
+      "destructiveOperations": true,
+      "productionChanges": true,
+      "secretModifications": true
+    }
+  }
+}

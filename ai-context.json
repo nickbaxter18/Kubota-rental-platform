@@ -1,0 +1,96 @@
+{
+  "team": {
+    "members": [
+      {
+        "name": "You",
+        "role": "Full-stack Developer",
+        "expertise": ["Next.js", "NestJS", "TypeScript", "Kubernetes", "PostgreSQL"],
+        "timezone": "UTC",
+        "communicationStyle": "Direct and technical"
+      },
+      {
+        "name": "Cline",
+        "role": "AI Assistant",
+        "expertise": ["Code Generation", "Architecture", "Testing", "DevOps", "Security"],
+        "capabilities": ["Multi-modal analysis", "Tool execution", "Context awareness"],
+        "responseStyle": "Precise and actionable"
+      }
+    ],
+    "communication": {
+      "preferredChannel": "VS Code Comments",
+      "decisionLog": "decisions.md",
+      "aiTags": ["AI-TODO", "AI-FEEDBACK", "AI-REVIEW", "AI-URGENT"],
+      "escalationProtocol": "Use @mention for urgent issues"
+    }
+  },
+  "project": {
+    "name": "Kubota Rental Platform",
+    "architecture": "Full-stack with Next.js + NestJS",
+    "criticalPaths": [
+      "booking-flow",
+      "payment-processing",
+      "user-authentication",
+      "equipment-management"
+    ],
+    "techStack": {
+      "frontend": ["Next.js 15", "React 19", "TypeScript", "Tailwind CSS"],
+      "backend": ["NestJS 11+", "TypeORM", "PostgreSQL", "Redis"],
+      "infrastructure": ["Docker", "Kubernetes", "Terraform", "GitHub Actions"],
+      "testing": ["Jest", "Playwright", "Vitest"],
+      "monitoring": ["Sentry", "Prometheus", "Grafana"]
+    },
+    "businessLogic": {
+      "primaryFlow": "Equipment booking → Payment → Contract → Insurance → Delivery",
+      "keyEntities": ["User", "Equipment", "Booking", "Payment", "Contract"],
+      "externalIntegrations": ["Stripe", "SendGrid", "Cloudflare", "AWS S3"]
+    }
+  },
+  "development": {
+    "patterns": {
+      "folderStructure": "Feature-based with shared libraries",
+      "namingConvention": "kebab-case for files, PascalCase for components",
+      "errorHandling": "Consistent error responses with proper HTTP status codes",
+      "validation": "Class-validator with custom decorators"
+    },
+    "standards": {
+      "testing": "Unit tests for services, integration tests for controllers",
+      "documentation": "JSDoc comments for public APIs",
+      "security": "Input validation, rate limiting, authentication guards",
+      "performance": "Database optimization, caching strategies, lazy loading"
+    }
+  },
+  "aiCapabilities": {
+    "contextAwareness": {
+      "projectStructure": true,
+      "recentChanges": true,
+      "teamDecisions": true,
+      "businessLogic": true
+    },
+    "executionPermissions": {
+      "safeCommands": [
+        "pnpm install",
+        "pnpm build",
+        "pnpm test",
+        "pnpm lint",
+        "git status",
+        "git log --oneline -10",
+        "docker-compose ps",
+        "kubectl get pods"
+      ],
+      "approvalRequired": [
+        "production.deploy",
+        "db.migrate",
+        "secrets.rotate",
+        "branch.delete",
+        "npm publish"
+      ]
+    },
+    "analysisFeatures": [
+      "Code review and suggestions",
+      "Performance optimization",
+      "Security vulnerability detection",
+      "Test coverage analysis",
+      "Architecture recommendations"
+    ]
+  }
+}
